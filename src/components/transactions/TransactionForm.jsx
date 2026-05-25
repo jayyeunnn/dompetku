@@ -172,7 +172,6 @@ export default function TransactionForm({
           value={amount}
           onChange={setAmount}
           label="Nominal"
-          autoFocus
         />
 
         {/* Wallet Source */}
