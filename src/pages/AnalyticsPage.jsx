@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
 
   const donutSegments = categoryBreakdown.map((item, index) => {
     const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`
-    const strokeDashoffset = circumference - (accumulatedPercent / 100) * circumference
+    const strokeDashoffset = (accumulatedPercent / 100) * circumference
     accumulatedPercent += item.percentage
 
     return {
@@ -396,41 +396,10 @@ export default function AnalyticsPage() {
             {/* ====== INCOME VS EXPENSE RATIO BAR ====== */}
             <section className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container flex flex-col gap-2">
               <div className="flex justify-between items-center text-xs text-on-surface-variant font-medium">
-                <span>Rasio Pengeluaran terhadap Anggaran</span>
-                <div className="flex items-center gap-2">
-                  {isEditingBudget ? (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-outline">Rp</span>
-                      <input
-                        type="number"
-                        value={tempBudget}
-                        onChange={(e) => setTempBudget(e.target.value)}
-                        onBlur={handleSaveBudget}
-                        onKeyDown={handleKeyDownBudget}
-                        className="w-20 text-right px-1 bg-surface-container rounded border border-primary text-[10px] font-bold focus:outline-none"
-                        autoFocus
-                        placeholder="Anggaran"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-0.5">
-                      <span className="font-bold text-on-surface tabular-nums">
-                        {formatCurrency(budget)}
-                      </span>
-                      <button
-                        onClick={handleStartEditBudget}
-                        className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-container text-outline hover:text-primary transition-all active:scale-90"
-                        title="Edit Anggaran"
-                      >
-                        <span className="material-symbols-outlined text-[12px]">edit</span>
-                      </button>
-                    </div>
-                  )}
-                  <span className="text-outline/40 font-normal">|</span>
-                  <span className="font-bold text-primary tabular-nums">
-                    {ratio}%
-                  </span>
-                </div>
+                <span>Rasio Pengeluaran</span>
+                <span className="font-bold text-primary tabular-nums">
+                  {ratio}%
+                </span>
               </div>
               <div className="w-full h-3 rounded-full bg-surface-container overflow-hidden flex">
                 {ratio > 0 ? (
@@ -466,9 +435,6 @@ export default function AnalyticsPage() {
             <section className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container flex flex-col gap-4">
               <div>
                 <h3 className="text-sm font-semibold text-on-surface">Distribusi Pengeluaran</h3>
-                <p className="text-[11px] text-on-surface-variant mt-0.5">
-                  Setiap segmen warna mewakili pengeluaran kategori tersebut. Arahkan kursor/sentuh diagram untuk melihat detail.
-                </p>
               </div>
               
               {totalExpense === 0 ? (
@@ -572,9 +538,6 @@ export default function AnalyticsPage() {
             <section className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container flex flex-col gap-4">
               <div>
                 <h3 className="text-sm font-semibold text-on-surface">Tren Pengeluaran Mingguan</h3>
-                <p className="text-[11px] text-on-surface-variant mt-0.5">
-                  Grafik belanja mingguan (Minggu 1 s.d Minggu 5) pada bulan terpilih.
-                </p>
               </div>
               
               {totalExpense === 0 ? (
