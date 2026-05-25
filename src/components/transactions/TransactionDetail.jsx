@@ -320,7 +320,7 @@ export default function TransactionDetail({
                 <span className="text-sm text-text-tertiary">Ketuk untuk unggah foto struk</span>
               </button>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handlePhotoSelect} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoSelect} className="hidden" />
           </div>
 
           {error && (
