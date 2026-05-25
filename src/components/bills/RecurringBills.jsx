@@ -184,22 +184,6 @@ export default function RecurringBills({
                   )}
                 </div>
               </div>
-              
-              {/* Confirm Delete Dialog */}
-              {confirmDeleteId === bill.id && (
-                <div className="bg-expense-light/50 rounded-2xl p-4 border border-expense/20 animate-slide-down mt-2">
-                  <p className="text-sm font-semibold text-expense-dark mb-1">Yakin ingin menghapus tagihan ini?</p>
-                  <p className="text-xs text-expense-dark/70 mb-3">Data tagihan berulang ini akan dihapus permanen.</p>
-                  {deleteError && <p className="text-xs text-expense-dark mb-2">{deleteError}</p>}
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => { setConfirmDeleteId(null); setDeleteError('') }} className="flex-1">Batal</Button>
-                    <Button variant="danger" size="sm" loading={isDeleting} onClick={() => handleConfirmDelete(bill.id)} className="flex-1">
-                      {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
             )
           })}
         </div>
@@ -289,6 +273,40 @@ export default function RecurringBills({
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ====== DELETE BILL MODAL ====== */}
+      <Modal
+        isOpen={confirmDeleteId !== null}
+        onClose={() => { setConfirmDeleteId(null); setDeleteError('') }}
+        title="Hapus Tagihan"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="text-center p-4">
+            <div className="w-16 h-16 bg-expense-light text-expense-dark rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="material-symbols-outlined text-[32px]">delete_forever</span>
+            </div>
+            <h3 className="font-bold text-lg text-text-primary mb-1">Yakin Hapus Tagihan?</h3>
+            <p className="text-sm text-text-secondary">
+              Data tagihan ini akan dihapus permanen dan tidak bisa dikembalikan.
+            </p>
+          </div>
+
+          {deleteError && (
+            <p className="text-sm text-expense-dark bg-expense-light p-3 rounded-xl text-center">
+              {deleteError}
+            </p>
+          )}
+
+          <div className="flex gap-3 mt-2">
+            <Button variant="ghost" className="flex-1" onClick={() => { setConfirmDeleteId(null); setDeleteError('') }}>
+              Batal
+            </Button>
+            <Button variant="danger" className="flex-1" loading={isDeleting} onClick={() => handleConfirmDelete(confirmDeleteId)}>
+              {isDeleting ? 'Menghapus...' : 'Hapus Tagihan'}
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
