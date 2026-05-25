@@ -7,6 +7,7 @@ DompetKu adalah aplikasi pencatatan keuangan pribadi modern berbasis web yang di
 - **Dashboard Keuangan:** Ringkasan total saldo, pemasukan, dan pengeluaran bulan ini.
 - **Manajemen Multi-Dompet (Wallets):** Pisahkan uang Anda ke berbagai dompet seperti Cash, Rekening BCA, e-Wallet, dll.
 - **Pencatatan Transaksi:** Catat pemasukan, pengeluaran, dan transfer antar dompet dengan mudah.
+- **Pencatatan Otomatis dengan Suara (Voice Input):** Catat transaksi super cepat dengan mengucapkan kalimat alami bahasa Indonesia (misal: *"beli kopi dua puluh ribu pakai gopay"*), sistem akan otomatis mendeteksi nominal, kategori, dompet, dan membuat catatannya.
 - **Manajemen Transaksi Tingkat Lanjut:** Edit dan hapus transaksi dengan perhitungan saldo (net-delta) yang sangat akurat.
 - **Unggah Bukti Struk/Foto:** Lampirkan foto bukti transaksi lengkap dengan kompresi sisi klien (HTML5 Canvas) dan **Watermark** (ala Strava).
 - **Galeri Transaksi:** Lihat daftar transaksi Anda dalam mode list konvensional atau mode **Grid Galeri** yang menarik.

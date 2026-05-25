@@ -115,19 +115,20 @@ export default function RecurringBills({
   }))
 
   return (
-    <div className="bg-background-secondary rounded-3xl p-5 mb-8">
+    <div className="bg-surface-container-lowest rounded-xl p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] border border-surface-container mb-6 animate-fade-in">
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-expense-light flex items-center justify-center">
-            <span className="material-symbols-outlined text-[18px] text-expense-dark">receipt_long</span>
+          <div className="w-8 h-8 rounded-full bg-expense-light flex items-center justify-center text-expense-dark">
+            <span className="material-symbols-outlined text-[18px]">request_quote</span>
           </div>
-          <h2 className="text-lg font-bold text-text-primary">Tagihan Bulan Ini</h2>
+          <h3 className="text-sm font-semibold text-on-surface">Tagihan Bulan Ini</h3>
         </div>
         <button
           onClick={handleOpenAdd}
-          className="text-sm font-medium text-primary hover:text-primary-dark transition-colors"
+          className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-0.5"
         >
-          + Tambah
+          <span className="material-symbols-outlined text-[16px]">add</span>
+          Tambah
         </button>
       </div>
 

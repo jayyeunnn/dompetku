@@ -13,6 +13,7 @@ import {
 import { getToday, formatCurrency, formatDate } from '../../lib/formatters'
 import { compressAndWatermark, uploadTransactionPhoto } from '../../lib/imageUtils'
 import { useAuth } from '../../context/AuthContext'
+import VoiceInputModal from '../voice/VoiceInputModal'
 
 const TABS = [
   { key: 'expense', label: 'Pengeluaran', icon: ArrowUpRight, color: 'expense' },
@@ -26,8 +27,10 @@ export default function TransactionForm({
   initialType = 'expense',
   wallets = [],
   onSave,
+  initialData = null,
 }) {
   const { user } = useAuth()
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false)
   const [type, setType] = useState(initialType)
   const [amount, setAmount] = useState(0)
   const [walletId, setWalletId] = useState('')
@@ -43,21 +46,56 @@ export default function TransactionForm({
   const [photoPreview, setPhotoPreview] = useState(null)
   const fileInputRef = useRef(null)
 
-  // Sync type with initialType whenever the form opens
+  // Sync form state when opened or when initialData changes
   useEffect(() => {
     if (isOpen) {
-      setType(initialType)
-      setAmount(0)
-      setWalletId('')
-      setDestWalletId('')
-      setCategoryId('')
-      setDescription('')
-      setDate(getToday())
+      if (initialData) {
+        setType(initialData.type || initialType)
+        setAmount(initialData.amount || 0)
+        setWalletId(initialData.walletId || '')
+        setDestWalletId(initialData.destWalletId || '')
+        setCategoryId(initialData.categoryId || '')
+        setDescription(initialData.description || '')
+        setDate(initialData.date || getToday())
+      } else {
+        setType(initialType)
+        setAmount(0)
+        setWalletId('')
+        setDestWalletId('')
+        setCategoryId('')
+        setDescription('')
+        setDate(getToday())
+      }
       setError('')
       setPhotoFile(null)
       setPhotoPreview(null)
     }
-  }, [isOpen, initialType])
+  }, [isOpen, initialType, initialData])
+
+  const handleVoiceResult = (parsed) => {
+    if (!parsed) return
+    if (parsed.type) {
+      setType(parsed.type)
+    }
+    if (parsed.amount > 0) {
+      setAmount(parsed.amount)
+    }
+    if (parsed.walletId) {
+      setWalletId(parsed.walletId)
+    }
+    if (parsed.type === 'transfer' && parsed.destWalletId) {
+      setDestWalletId(parsed.destWalletId)
+    }
+    if (parsed.type !== 'transfer' && parsed.categoryId) {
+      setCategoryId(parsed.categoryId)
+    }
+    if (parsed.description) {
+      setDescription(parsed.description)
+    }
+    if (parsed.date) {
+      setDate(parsed.date)
+    }
+  }
 
   const resetForm = () => {
     setAmount(0)
@@ -210,6 +248,16 @@ export default function TransactionForm({
       title="Tambah Transaksi"
     >
       <div className="flex flex-col gap-5">
+        {/* Quick Voice Assistant Button */}
+        <button
+          type="button"
+          onClick={() => setIsVoiceModalOpen(true)}
+          className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-primary/10 hover:bg-primary/15 text-primary text-sm font-semibold transition-all duration-200 active:scale-[0.98]"
+        >
+          <span className="material-symbols-outlined text-[20px] font-bold">mic</span>
+          Catat Otomatis dengan Suara
+        </button>
+
         {/* Type Tabs */}
         <div className="flex bg-background-secondary rounded-2xl p-1 gap-1">
           {TABS.map(({ key, label, icon: Icon, color }) => (
@@ -356,6 +404,15 @@ export default function TransactionForm({
           {saving && photoFile ? 'Mengupload foto...' : `Simpan ${TABS.find((t) => t.key === type)?.label}`}
         </Button>
       </div>
+
+      {/* Voice Input Modal */}
+      <VoiceInputModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onResult={handleVoiceResult}
+        wallets={wallets}
+        categories={ALL_CATEGORIES}
+      />
     </Modal>
   )
 }

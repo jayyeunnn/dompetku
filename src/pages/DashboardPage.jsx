@@ -9,6 +9,7 @@ import { useRecurringBills } from '../hooks/useRecurringBills'
 import TransactionForm from '../components/transactions/TransactionForm'
 import TransactionDetail from '../components/transactions/TransactionDetail'
 import RecurringBills from '../components/bills/RecurringBills'
+import VoiceInputModal from '../components/voice/VoiceInputModal'
 import { deleteTransactionPhoto } from '../lib/imageUtils'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
@@ -93,6 +94,8 @@ export default function DashboardPage() {
   // Transaction form state
   const [txFormOpen, setTxFormOpen] = useState(false)
   const [txType, setTxType] = useState('expense')
+  const [isVoiceOpen, setIsVoiceOpen] = useState(false)
+  const [prefilledTxData, setPrefilledTxData] = useState(null)
 
   // Add wallet form state
   const [walletFormOpen, setWalletFormOpen] = useState(false)
@@ -109,6 +112,13 @@ export default function DashboardPage() {
 
   const handleOpenTxForm = (type) => {
     setTxType(type)
+    setTxFormOpen(true)
+  }
+
+  const handleVoiceResult = (parsedData) => {
+    if (!parsedData) return
+    setPrefilledTxData(parsedData)
+    setTxType(parsedData.type || 'expense')
     setTxFormOpen(true)
   }
 
@@ -426,35 +436,58 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* ====== QUICK ACTIONS ====== */}
-        <section className="grid grid-cols-3 gap-4">
-          <button
-            onClick={() => handleOpenTxForm('expense')}
-            className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
-          >
-            <div className="w-14 h-14 rounded-full bg-error-container flex items-center justify-center text-error shadow-sm">
-              <span className="material-symbols-outlined text-[24px]">arrow_upward</span>
+        {/* ====== QUICK ACTIONS CARD ====== */}
+        <section className="bg-surface-container-lowest rounded-xl p-4 shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)] border border-surface-container flex flex-col gap-3 relative animate-fade-in">
+          {/* Card Header with title and tiny mic button at the top right */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary-dark">
+                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              </div>
+              <h3 className="text-sm font-semibold text-on-surface">Transaksi</h3>
             </div>
-            <span className="text-xs font-medium text-on-surface-variant">Pengeluaran</span>
-          </button>
-          <button
-            onClick={() => handleOpenTxForm('income')}
-            className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
-          >
-            <div className="w-14 h-14 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container shadow-sm">
-              <span className="material-symbols-outlined text-[24px]">arrow_downward</span>
-            </div>
-            <span className="text-xs font-medium text-on-surface-variant">Pemasukan</span>
-          </button>
-          <button
-            onClick={() => handleOpenTxForm('transfer')}
-            className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
-          >
-            <div className="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container shadow-sm">
-              <span className="material-symbols-outlined text-[24px]">swap_horiz</span>
-            </div>
-            <span className="text-xs font-medium text-on-surface-variant">Transfer</span>
-          </button>
+            <button
+              onClick={() => setIsVoiceOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/15 text-primary text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer"
+              aria-label="Catat dengan Suara"
+            >
+              <span className="material-symbols-outlined text-[16px] font-bold">mic</span>
+              <span>Catat Suara</span>
+            </button>
+          </div>
+          
+          {/* Main 3 Buttons: Pengeluaran, Pemasukan, Transfer */}
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => handleOpenTxForm('expense')}
+              className="flex flex-col items-center gap-2 py-3 px-2 rounded-2xl bg-error-container/30 hover:bg-error-container/50 text-error transition-all duration-150 active:scale-95 cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-error-container flex items-center justify-center text-error">
+                <span className="material-symbols-outlined text-[20px]">arrow_upward</span>
+              </div>
+              <span className="text-xs font-semibold text-on-surface-variant">Pengeluaran</span>
+            </button>
+            
+            <button
+              onClick={() => handleOpenTxForm('income')}
+              className="flex flex-col items-center gap-2 py-3 px-2 rounded-2xl bg-secondary-container/30 hover:bg-secondary-container/50 text-on-secondary-container transition-all duration-150 active:scale-95 cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-secondary-container flex items-center justify-center text-on-secondary-container">
+                <span className="material-symbols-outlined text-[20px]">arrow_downward</span>
+              </div>
+              <span className="text-xs font-semibold text-on-surface-variant">Pemasukan</span>
+            </button>
+            
+            <button
+              onClick={() => handleOpenTxForm('transfer')}
+              className="flex flex-col items-center gap-2 py-3 px-2 rounded-2xl bg-primary-container/30 hover:bg-primary-container/50 text-on-primary-container transition-all duration-150 active:scale-95 cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container">
+                <span className="material-symbols-outlined text-[20px]">swap_horiz</span>
+              </div>
+              <span className="text-xs font-semibold text-on-surface-variant">Transfer</span>
+            </button>
+          </div>
         </section>
 
         {/* ====== RECURRING BILLS ====== */}
@@ -548,10 +581,23 @@ export default function DashboardPage() {
       {/* ====== TRANSACTION FORM MODAL ====== */}
       <TransactionForm
         isOpen={txFormOpen}
-        onClose={() => setTxFormOpen(false)}
+        onClose={() => {
+          setTxFormOpen(false)
+          setPrefilledTxData(null)
+        }}
         initialType={txType}
         wallets={wallets}
         onSave={handleSaveTransaction}
+        initialData={prefilledTxData}
+      />
+
+      {/* ====== VOICE ASSISTANT MODAL ====== */}
+      <VoiceInputModal
+        isOpen={isVoiceOpen}
+        onClose={() => setIsVoiceOpen(false)}
+        onResult={handleVoiceResult}
+        wallets={wallets}
+        categories={ALL_CATEGORIES}
       />
 
       {/* ====== TRANSACTION DETAIL MODAL ====== */}
