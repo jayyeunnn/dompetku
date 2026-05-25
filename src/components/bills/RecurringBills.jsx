@@ -30,6 +30,11 @@ export default function RecurringBills({
   const [isPaying, setIsPaying] = useState(false)
   const [payError, setPayError] = useState('')
 
+  // Delete Confirm State
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   // Get current YYYY-MM period
   const now = new Date()
   const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -63,13 +68,21 @@ export default function RecurringBills({
     }
   }
 
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`Yakin ingin menghapus tagihan "${name}"?`)) {
-      try {
-        await onDeleteBill(id)
-      } catch (err) {
-        alert(err.message || 'Gagal menghapus tagihan')
-      }
+  const handleDelete = (id) => {
+    setConfirmDeleteId(id)
+    setDeleteError('')
+  }
+
+  const handleConfirmDelete = async (id) => {
+    setIsDeleting(true)
+    setDeleteError('')
+    try {
+      await onDeleteBill(id)
+      setConfirmDeleteId(null)
+    } catch (err) {
+      setDeleteError(err.message || 'Gagal menghapus tagihan')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -148,7 +161,7 @@ export default function RecurringBills({
 
                 <div className="flex justify-end mt-2 sm:mt-0 min-w-[120px] items-center gap-2">
                   <button
-                    onClick={() => handleDelete(bill.id, bill.name)}
+                    onClick={() => handleDelete(bill.id)}
                     className="w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:bg-expense-light hover:text-expense-dark transition-colors active:scale-95 flex-shrink-0"
                     aria-label="Hapus tagihan"
                   >
@@ -171,6 +184,22 @@ export default function RecurringBills({
                   )}
                 </div>
               </div>
+              
+              {/* Confirm Delete Dialog */}
+              {confirmDeleteId === bill.id && (
+                <div className="bg-expense-light/50 rounded-2xl p-4 border border-expense/20 animate-slide-down mt-2">
+                  <p className="text-sm font-semibold text-expense-dark mb-1">Yakin ingin menghapus tagihan ini?</p>
+                  <p className="text-xs text-expense-dark/70 mb-3">Data tagihan berulang ini akan dihapus permanen.</p>
+                  {deleteError && <p className="text-xs text-expense-dark mb-2">{deleteError}</p>}
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setConfirmDeleteId(null); setDeleteError('') }} className="flex-1">Batal</Button>
+                    <Button variant="danger" size="sm" loading={isDeleting} onClick={() => handleConfirmDelete(bill.id)} className="flex-1">
+                      {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
             )
           })}
         </div>
