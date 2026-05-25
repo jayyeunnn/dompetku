@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
 
   const donutSegments = categoryBreakdown.map((item, index) => {
     const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`
-    const strokeDashoffset = (accumulatedPercent / 100) * circumference
+    const strokeDashoffset = - (accumulatedPercent / 100) * circumference
     accumulatedPercent += item.percentage
 
     return {
