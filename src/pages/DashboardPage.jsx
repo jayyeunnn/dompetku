@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useWallets } from '../hooks/useWallets'
 import { useTransactions } from '../hooks/useTransactions'
 import { useSinkingFunds } from '../hooks/useSinkingFunds'
@@ -79,6 +80,7 @@ function getGreeting() {
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { user, signOut } = useAuth()
+  const { toggleTheme, isDark } = useTheme()
   const { wallets, totalBalance, loading: walletsLoading, addWallet, updateWalletBalance, refetch: refetchWallets } = useWallets()
   const { transactions, loading: txLoading, addTransaction, getRecent, refetch: refetchTx } = useTransactions()
   const { totalAllocated } = useSinkingFunds()
@@ -169,13 +171,24 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <button
-            onClick={signOut}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
-            aria-label="Keluar"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
+              aria-label="Ubah Tema"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {isDark ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
+            <button
+              onClick={signOut}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
+              aria-label="Keluar"
+            >
+              <span className="material-symbols-outlined text-[20px]">logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
