@@ -7,15 +7,19 @@ DompetKu adalah aplikasi pencatatan keuangan pribadi modern berbasis web yang di
 - **Dashboard Keuangan:** Ringkasan total saldo, pemasukan, dan pengeluaran bulan ini.
 - **Manajemen Multi-Dompet (Wallets):** Pisahkan uang Anda ke berbagai dompet seperti Cash, Rekening BCA, e-Wallet, dll.
 - **Pencatatan Transaksi:** Catat pemasukan, pengeluaran, dan transfer antar dompet dengan mudah.
+- **Manajemen Transaksi Tingkat Lanjut:** Edit dan hapus transaksi dengan perhitungan saldo (net-delta) yang sangat akurat.
+- **Unggah Bukti Struk/Foto:** Lampirkan foto bukti transaksi lengkap dengan kompresi sisi klien (HTML5 Canvas) dan **Watermark** (ala Strava).
+- **Galeri Transaksi:** Lihat daftar transaksi Anda dalam mode list konvensional atau mode **Grid Galeri** yang menarik.
 - **Tabungan Target (Sinking Funds):** Buat target tabungan (misal: Beli PC, Liburan) dan alokasikan dana langsung dari saldo bebas Anda.
 - **Autentikasi Aman:** Sistem pendaftaran dan login yang terintegrasi (mendukung fitur OTP / konfirmasi email).
 - **Akses Cepat (Progressive Web App):** Bisa diinstal di layar utama HP Anda sebagai aplikasi PWA.
+- **Dark Mode:** Dukungan tema gelap (Dark Mode) untuk kenyamanan mata.
 
 ## 💻 Teknologi yang Digunakan
 
 - **Frontend:** React.js (menggunakan Vite)
 - **Styling:** Tailwind CSS (dengan custom utility bergaya Material Design 3)
-- **Backend & Database:** Supabase (PostgreSQL, Authentication)
+- **Backend & Database:** Supabase (PostgreSQL, Authentication, **Storage**)
 - **Ikon:** Google Material Symbols & Lucide React
 - **Deployment:** Vercel
 
