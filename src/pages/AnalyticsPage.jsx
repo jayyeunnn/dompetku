@@ -549,7 +549,7 @@ export default function AnalyticsPage() {
                               {cat.name}
                             </p>
                             <p className="text-[11px] text-on-surface-variant truncate tabular-nums mt-0.5">
-                              Terpakai {formatCurrency(spent)} dari {formatCurrency(limit)}
+                              Terpakai ({formatCurrency(spent)})
                             </p>
                           </div>
 
