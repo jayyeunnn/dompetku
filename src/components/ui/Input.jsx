@@ -8,7 +8,7 @@ export default function Input({
   const inputId = id || `input-${label?.toLowerCase().replace(/\s/g, '-')}`
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {label && (
         <label
           htmlFor={inputId}

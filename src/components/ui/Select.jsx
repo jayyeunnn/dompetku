@@ -10,7 +10,7 @@ export default function Select({
   renderOption,
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
+    <div className={`flex flex-col gap-1.5 w-full min-w-0 ${className}`}>
       {label && (
         <label className="text-sm font-medium text-text-secondary">
           {label}

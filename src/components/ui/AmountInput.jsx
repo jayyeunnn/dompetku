@@ -41,7 +41,7 @@ export default function AmountInput({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full min-w-0">
       {label && (
         <label className="text-sm font-medium text-text-secondary">
           {label}
