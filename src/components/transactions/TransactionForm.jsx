@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
@@ -8,8 +8,11 @@ import Input from '../ui/Input'
 import {
   INCOME_CATEGORIES,
   EXPENSE_CATEGORIES,
+  ALL_CATEGORIES,
 } from '../../lib/constants'
-import { getToday, formatCurrency } from '../../lib/formatters'
+import { getToday, formatCurrency, formatDate } from '../../lib/formatters'
+import { compressAndWatermark, uploadTransactionPhoto } from '../../lib/imageUtils'
+import { useAuth } from '../../context/AuthContext'
 
 const TABS = [
   { key: 'expense', label: 'Pengeluaran', icon: ArrowUpRight, color: 'expense' },
@@ -24,6 +27,7 @@ export default function TransactionForm({
   wallets = [],
   onSave,
 }) {
+  const { user } = useAuth()
   const [type, setType] = useState(initialType)
   const [amount, setAmount] = useState(0)
   const [walletId, setWalletId] = useState('')
@@ -33,6 +37,11 @@ export default function TransactionForm({
   const [date, setDate] = useState(getToday())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Photo state
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const fileInputRef = useRef(null)
 
   // Sync type with initialType whenever the form opens
   useEffect(() => {
@@ -45,6 +54,8 @@ export default function TransactionForm({
       setDescription('')
       setDate(getToday())
       setError('')
+      setPhotoFile(null)
+      setPhotoPreview(null)
     }
   }, [isOpen, initialType])
 
@@ -56,12 +67,49 @@ export default function TransactionForm({
     setDescription('')
     setDate(getToday())
     setError('')
+    setPhotoFile(null)
+    setPhotoPreview(null)
   }
 
   const handleTypeChange = (newType) => {
     setType(newType)
     setCategoryId('')
     setError('')
+  }
+
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('File harus berupa gambar')
+      return
+    }
+
+    // Validate file size (max 10MB raw)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Ukuran foto maksimal 10MB')
+      return
+    }
+
+    setPhotoFile(file)
+    setError('')
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setPhotoPreview(ev.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   const handleSave = async () => {
@@ -106,6 +154,22 @@ export default function TransactionForm({
     setError('')
 
     try {
+      let photoUrl = null
+
+      // Process photo if selected
+      if (photoFile && user) {
+        const category = ALL_CATEGORIES.find((c) => c.id === categoryId)
+        const categoryName = category?.name || (type === 'transfer' ? 'Transfer' : 'Lainnya')
+
+        const watermarkedBlob = await compressAndWatermark(photoFile, {
+          amount,
+          category: categoryName,
+          date,
+        })
+
+        photoUrl = await uploadTransactionPhoto(watermarkedBlob, user.id)
+      }
+
       await onSave({
         type,
         amount,
@@ -114,6 +178,7 @@ export default function TransactionForm({
         category_id: type === 'transfer' ? null : categoryId,
         description: description.trim() || null,
         date,
+        photo_url: photoUrl,
       })
       resetForm()
       onClose()
@@ -221,6 +286,59 @@ export default function TransactionForm({
           onChange={(e) => setDate(e.target.value)}
         />
 
+        {/* Photo Upload */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-text-secondary">
+            Foto Bukti (opsional)
+          </label>
+
+          {photoPreview ? (
+            /* Thumbnail preview */
+            <div className="relative rounded-2xl overflow-hidden bg-background-secondary">
+              <img
+                src={photoPreview}
+                alt="Preview foto bukti"
+                className="w-full max-h-[200px] object-cover"
+              />
+              {/* Remove button */}
+              <button
+                type="button"
+                onClick={handleRemovePhoto}
+                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors active:scale-95"
+                aria-label="Hapus foto"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+          ) : (
+            /* Upload area */
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 py-6 px-4 rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer active:scale-[0.98]"
+            >
+              <div className="w-10 h-10 rounded-full bg-background-secondary flex items-center justify-center">
+                <span className="material-symbols-outlined text-[22px] text-text-tertiary">
+                  add_a_photo
+                </span>
+              </div>
+              <span className="text-sm text-text-tertiary">
+                Ketuk untuk unggah foto struk
+              </span>
+            </button>
+          )}
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoSelect}
+            className="hidden"
+          />
+        </div>
+
         {/* Error */}
         {error && (
           <div className="px-4 py-3 rounded-xl bg-expense-light text-expense-dark text-sm font-medium animate-slide-down">
@@ -236,7 +354,7 @@ export default function TransactionForm({
           loading={saving}
           onClick={handleSave}
         >
-          Simpan {TABS.find((t) => t.key === type)?.label}
+          {saving && photoFile ? 'Mengupload foto...' : `Simpan ${TABS.find((t) => t.key === type)?.label}`}
         </Button>
       </div>
     </Modal>

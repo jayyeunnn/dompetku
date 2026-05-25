@@ -61,6 +61,21 @@ export function useTransactions(year, month) {
     setTransactions((prev) => prev.filter((t) => t.id !== id))
   }
 
+  const updateTransaction = async (id, updates) => {
+    const { data, error } = await supabase
+      .from('transactions')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    setTransactions((prev) =>
+      prev.map((t) => (t.id === id ? data : t))
+    )
+    return data
+  }
+
   // Get recent N transactions (for dashboard)
   const getRecent = (n = 5) => transactions.slice(0, n)
 
@@ -88,6 +103,7 @@ export function useTransactions(year, month) {
     loading,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
     getRecent,
     groupedByDate,
     summary,

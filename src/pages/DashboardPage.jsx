@@ -6,6 +6,8 @@ import { useWallets } from '../hooks/useWallets'
 import { useTransactions } from '../hooks/useTransactions'
 import { useSinkingFunds } from '../hooks/useSinkingFunds'
 import TransactionForm from '../components/transactions/TransactionForm'
+import TransactionDetail from '../components/transactions/TransactionDetail'
+import { deleteTransactionPhoto } from '../lib/imageUtils'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -82,7 +84,7 @@ export default function DashboardPage() {
   const { user, signOut } = useAuth()
   const { toggleTheme, isDark } = useTheme()
   const { wallets, totalBalance, loading: walletsLoading, addWallet, updateWalletBalance, refetch: refetchWallets } = useWallets()
-  const { transactions, loading: txLoading, addTransaction, getRecent, refetch: refetchTx } = useTransactions()
+  const { transactions, loading: txLoading, addTransaction, deleteTransaction, updateTransaction, getRecent, refetch: refetchTx } = useTransactions()
   const { totalAllocated } = useSinkingFunds()
 
   // Transaction form state
@@ -97,6 +99,10 @@ export default function DashboardPage() {
 
   // Balance visibility toggle
   const [isBalanceVisible, setIsBalanceVisible] = useState(true)
+
+  // Transaction detail modal state
+  const [selectedTx, setSelectedTx] = useState(null)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const handleOpenTxForm = (type) => {
     setTxType(type)
@@ -124,6 +130,97 @@ export default function DashboardPage() {
     }
 
     // Refresh data from database
+    await refetchWallets()
+    await refetchTx()
+  }
+
+  /**
+   * DELETE handler: revert wallet balance, delete photo, delete transaction.
+   */
+  const handleDeleteTx = async (tx) => {
+    const numAmount = Number(tx.amount) || 0
+
+    // 1. Revert wallet balance
+    try {
+      if (tx.type === 'income') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'subtract')
+      } else if (tx.type === 'expense') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'add')
+      } else if (tx.type === 'transfer') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'add')
+        if (tx.destination_wallet_id) {
+          await updateWalletBalance(tx.destination_wallet_id, numAmount, 'subtract')
+        }
+      }
+    } catch (err) {
+      console.error('Error reverting wallet balance:', err)
+    }
+
+    // 2. Delete photo from storage if exists
+    if (tx.photo_url) {
+      await deleteTransactionPhoto(tx.photo_url)
+    }
+
+    // 3. Delete transaction record
+    await deleteTransaction(tx.id)
+
+    // 4. Refresh
+    await refetchWallets()
+    await refetchTx()
+  }
+
+  /**
+   * UPDATE handler using NET DELTA approach.
+   * Instead of calling updateWalletBalance twice on the same wallet (which causes
+   * stale state), we compute a single net balance change per wallet and apply
+   * each wallet's update only ONCE.
+   */
+  const handleUpdateTx = async (oldTx, newData) => {
+    const oldAmount = Number(oldTx.amount) || 0
+    const newAmount = Number(newData.amount) || 0
+
+    // Build a delta map: walletId -> net balance change
+    const deltas = {}
+    const addDelta = (walletId, amount) => {
+      if (!walletId) return
+      deltas[walletId] = (deltas[walletId] || 0) + amount
+    }
+
+    // REVERT old transaction's effect
+    if (oldTx.type === 'income') {
+      addDelta(oldTx.wallet_id, -oldAmount)
+    } else if (oldTx.type === 'expense') {
+      addDelta(oldTx.wallet_id, +oldAmount)
+    } else if (oldTx.type === 'transfer') {
+      addDelta(oldTx.wallet_id, +oldAmount)
+      addDelta(oldTx.destination_wallet_id, -oldAmount)
+    }
+
+    // APPLY new transaction's effect
+    if (newData.type === 'income') {
+      addDelta(newData.wallet_id, +newAmount)
+    } else if (newData.type === 'expense') {
+      addDelta(newData.wallet_id, -newAmount)
+    } else if (newData.type === 'transfer') {
+      addDelta(newData.wallet_id, -newAmount)
+      addDelta(newData.destination_wallet_id, +newAmount)
+    }
+
+    // Apply each wallet's net delta (ONE call per wallet — no stale state issue)
+    try {
+      for (const [walletId, delta] of Object.entries(deltas)) {
+        if (delta === 0) continue
+        const op = delta > 0 ? 'add' : 'subtract'
+        await updateWalletBalance(walletId, Math.abs(delta), op)
+      }
+    } catch (err) {
+      console.error('Error updating wallet balances:', err)
+    }
+
+    // Update the transaction record
+    await updateTransaction(oldTx.id, newData)
+
+    // Refresh all data
     await refetchWallets()
     await refetchTx()
   }
@@ -369,7 +466,8 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center gap-4 p-4 border-b border-surface-container last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer"
+                    className="flex items-center gap-4 p-4 border-b border-surface-container last:border-0 hover:bg-surface-container-low transition-colors cursor-pointer active:scale-[0.98]"
+                    onClick={() => { setSelectedTx(tx); setDetailOpen(true) }}
                   >
                     {/* Icon circle */}
                     <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant flex-shrink-0">
@@ -377,9 +475,14 @@ export default function DashboardPage() {
                     </div>
                     {/* Description + category */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-base text-on-surface truncate font-medium">
-                        {tx.description || categoryName}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-base text-on-surface truncate font-medium">
+                          {tx.description || categoryName}
+                        </p>
+                        {tx.photo_url && (
+                          <span className="material-symbols-outlined text-[14px] text-outline flex-shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                        )}
+                      </div>
                       <p className="text-sm text-on-surface-variant truncate">{categoryName}</p>
                     </div>
                     {/* Amount */}
@@ -401,6 +504,16 @@ export default function DashboardPage() {
         initialType={txType}
         wallets={wallets}
         onSave={handleSaveTransaction}
+      />
+
+      {/* ====== TRANSACTION DETAIL MODAL ====== */}
+      <TransactionDetail
+        isOpen={detailOpen}
+        onClose={() => { setDetailOpen(false); setSelectedTx(null) }}
+        transaction={selectedTx}
+        wallets={wallets}
+        onDelete={handleDeleteTx}
+        onUpdate={handleUpdateTx}
       />
 
       {/* ====== ADD WALLET MODAL ====== */}

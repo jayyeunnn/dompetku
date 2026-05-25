@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useTransactions } from '../hooks/useTransactions'
 import { useWallets } from '../hooks/useWallets'
 import TransactionForm from '../components/transactions/TransactionForm'
+import TransactionDetail from '../components/transactions/TransactionDetail'
+import { deleteTransactionPhoto } from '../lib/imageUtils'
 import { formatCurrency, formatDate } from '../lib/formatters'
 import { ALL_CATEGORIES, TX_TYPE_CONFIG, MONTH_NAMES } from '../lib/constants'
 
@@ -56,8 +58,13 @@ export default function TransactionsPage() {
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
   const [txFormOpen, setTxFormOpen] = useState(false)
+  const [viewMode, setViewMode] = useState('list') // 'list' | 'gallery'
 
-  const { transactions, loading, groupedByDate, summary, addTransaction, refetch } =
+  // Transaction detail modal
+  const [selectedTx, setSelectedTx] = useState(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+
+  const { transactions, loading, groupedByDate, summary, addTransaction, deleteTransaction, updateTransaction, refetch } =
     useTransactions(year, month)
   const { wallets, updateWalletBalance, refetch: refetchWallets } = useWallets()
 
@@ -103,11 +110,130 @@ export default function TransactionsPage() {
     await refetchWallets()
   }
 
+  const handleOpenDetail = (tx) => {
+    setSelectedTx(tx)
+    setDetailOpen(true)
+  }
+
+  /**
+   * DELETE handler: revert wallet balance, delete photo, delete transaction.
+   */
+  const handleDeleteTx = async (tx) => {
+    const numAmount = Number(tx.amount) || 0
+
+    // 1. Revert wallet balance
+    try {
+      if (tx.type === 'income') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'subtract')
+      } else if (tx.type === 'expense') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'add')
+      } else if (tx.type === 'transfer') {
+        await updateWalletBalance(tx.wallet_id, numAmount, 'add')
+        if (tx.destination_wallet_id) {
+          await updateWalletBalance(tx.destination_wallet_id, numAmount, 'subtract')
+        }
+      }
+    } catch (err) {
+      console.error('Error reverting wallet balance:', err)
+    }
+
+    // 2. Delete photo from storage if exists
+    if (tx.photo_url) {
+      await deleteTransactionPhoto(tx.photo_url)
+    }
+
+    // 3. Delete transaction record
+    await deleteTransaction(tx.id)
+
+    // 4. Refresh
+    await refetch()
+    await refetchWallets()
+  }
+
+  /**
+   * UPDATE handler using NET DELTA approach.
+   * Compute a single net change per wallet, then apply ONE call per wallet.
+   */
+  const handleUpdateTx = async (oldTx, newData) => {
+    const oldAmount = Number(oldTx.amount) || 0
+    const newAmount = Number(newData.amount) || 0
+
+    const deltas = {}
+    const addDelta = (walletId, amount) => {
+      if (!walletId) return
+      deltas[walletId] = (deltas[walletId] || 0) + amount
+    }
+
+    // REVERT old transaction
+    if (oldTx.type === 'income') {
+      addDelta(oldTx.wallet_id, -oldAmount)
+    } else if (oldTx.type === 'expense') {
+      addDelta(oldTx.wallet_id, +oldAmount)
+    } else if (oldTx.type === 'transfer') {
+      addDelta(oldTx.wallet_id, +oldAmount)
+      addDelta(oldTx.destination_wallet_id, -oldAmount)
+    }
+
+    // APPLY new transaction
+    if (newData.type === 'income') {
+      addDelta(newData.wallet_id, +newAmount)
+    } else if (newData.type === 'expense') {
+      addDelta(newData.wallet_id, -newAmount)
+    } else if (newData.type === 'transfer') {
+      addDelta(newData.wallet_id, -newAmount)
+      addDelta(newData.destination_wallet_id, +newAmount)
+    }
+
+    try {
+      for (const [walletId, delta] of Object.entries(deltas)) {
+        if (delta === 0) continue
+        const op = delta > 0 ? 'add' : 'subtract'
+        await updateWalletBalance(walletId, Math.abs(delta), op)
+      }
+    } catch (err) {
+      console.error('Error updating wallet balances:', err)
+    }
+
+    await updateTransaction(oldTx.id, newData)
+    await refetch()
+    await refetchWallets()
+  }
+
   const sortedDates = Object.keys(groupedByDate).sort(
     (a, b) => new Date(b) - new Date(a)
   )
 
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth()
+
+  // Helper to get tx display info
+  const getTxDisplayInfo = (tx) => {
+    const config = TX_TYPE_CONFIG[tx.type]
+    const category = ALL_CATEGORIES.find((c) => c.id === tx.category_id)
+    const categoryName = category?.name || (tx.type === 'transfer' ? 'Transfer' : 'Lainnya')
+    const iconName = category?.icon || config.icon
+    const matIcon = getMaterialIcon(iconName)
+    const catStyle = getCategoryStyle(tx.category_id)
+
+    const isTransfer = tx.type === 'transfer'
+    const finalIcon = isTransfer ? 'swap_horiz' : matIcon
+    const finalBg = isTransfer ? '#dbe1ff' : catStyle.bg
+    const finalFg = isTransfer ? '#004ac6' : catStyle.fg
+
+    const amountColorClass =
+      tx.type === 'income'
+        ? 'text-secondary'
+        : tx.type === 'expense'
+        ? 'text-error'
+        : 'text-primary'
+
+    const wallet = wallets.find((w) => w.id === tx.wallet_id)
+    const destWallet = wallets.find((w) => w.id === tx.destination_wallet_id)
+    const subLabel = isTransfer && wallet && destWallet
+      ? `${wallet.name} → ${destWallet.name}`
+      : category?.parent || categoryName
+
+    return { config, categoryName, finalIcon, finalBg, finalFg, amountColorClass, subLabel }
+  }
 
   return (
     <div className="bg-background text-on-background font-sans min-h-screen">
@@ -177,8 +303,38 @@ export default function TransactionsPage() {
           </div>
         </section>
 
-        {/* ====== TRANSACTION LIST ====== */}
-        <section className="px-5 mt-6 space-y-6">
+        {/* ====== VIEW MODE TOGGLE ====== */}
+        {!loading && transactions.length > 0 && (
+          <section className="px-5 mt-5 flex justify-end">
+            <div className="flex bg-surface-container-high rounded-lg p-0.5 gap-0.5">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                  viewMode === 'list'
+                    ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">view_list</span>
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('gallery')}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                  viewMode === 'gallery'
+                    ? 'bg-surface-container-lowest text-on-surface shadow-sm'
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">grid_view</span>
+                Galeri
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* ====== TRANSACTION LIST / GALLERY ====== */}
+        <section className="px-5 mt-4 space-y-6">
           {loading ? (
             /* Skeleton loading */
             <div className="space-y-4">
@@ -211,8 +367,53 @@ export default function TransactionsPage() {
                 Tambah Transaksi
               </button>
             </div>
+          ) : viewMode === 'gallery' ? (
+            /* ====== GALLERY GRID VIEW ====== */
+            <div className="grid grid-cols-3 gap-2">
+              {transactions.map((tx) => {
+                const { config, categoryName, finalIcon, finalBg, finalFg, amountColorClass } = getTxDisplayInfo(tx)
+
+                return (
+                  <button
+                    key={tx.id}
+                    onClick={() => handleOpenDetail(tx)}
+                    className="relative aspect-square rounded-xl overflow-hidden bg-surface-container-high active:scale-[0.96] transition-transform focus:outline-none"
+                  >
+                    {tx.photo_url ? (
+                      /* Photo thumbnail */
+                      <img
+                        src={tx.photo_url}
+                        alt={categoryName}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      /* Placeholder: category bg + icon */
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ backgroundColor: finalBg }}
+                      >
+                        <span
+                          className="material-symbols-outlined text-[32px]"
+                          style={{ color: finalFg, fontVariationSettings: "'FILL' 1" }}
+                        >
+                          {finalIcon}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Bottom overlay with amount */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1.5">
+                      <p className="text-[10px] font-bold text-white tabular-nums truncate">
+                        {config.sign}{formatCurrency(tx.amount)}
+                      </p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
           ) : (
-            /* Grouped transactions by date */
+            /* ====== LIST VIEW (default) ====== */
             sortedDates.map((date) => (
               <div key={date}>
                 {/* Date group header */}
@@ -228,36 +429,12 @@ export default function TransactionsPage() {
                 {/* Transaction items */}
                 <div className="space-y-2">
                   {groupedByDate[date].map((tx) => {
-                    const config = TX_TYPE_CONFIG[tx.type]
-                    const category = ALL_CATEGORIES.find((c) => c.id === tx.category_id)
-                    const categoryName = category?.name || (tx.type === 'transfer' ? 'Transfer' : 'Lainnya')
-                    const iconName = category?.icon || config.icon
-                    const matIcon = getMaterialIcon(iconName)
-                    const catStyle = getCategoryStyle(tx.category_id)
-
-                    // Transfer icon override
-                    const isTransfer = tx.type === 'transfer'
-                    const finalIcon = isTransfer ? 'swap_horiz' : matIcon
-                    const finalBg = isTransfer ? '#dbe1ff' : catStyle.bg
-                    const finalFg = isTransfer ? '#004ac6' : catStyle.fg
-
-                    const amountColorClass =
-                      tx.type === 'income'
-                        ? 'text-secondary'
-                        : tx.type === 'expense'
-                        ? 'text-error'
-                        : 'text-primary'
-
-                    // Wallet info for transfer
-                    const wallet = wallets.find((w) => w.id === tx.wallet_id)
-                    const destWallet = wallets.find((w) => w.id === tx.destination_wallet_id)
-                    const subLabel = isTransfer && wallet && destWallet
-                      ? `${wallet.name} → ${destWallet.name}`
-                      : category?.parent || categoryName
+                    const { config, categoryName, finalIcon, finalBg, finalFg, amountColorClass, subLabel } = getTxDisplayInfo(tx)
 
                     return (
                       <div
                         key={tx.id}
+                        onClick={() => handleOpenDetail(tx)}
                         className="bg-surface-container-lowest rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
                       >
                         <div className="flex items-center gap-4">
@@ -278,9 +455,14 @@ export default function TransactionsPage() {
                           </div>
                           {/* Description + category */}
                           <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-semibold text-on-surface truncate">
-                              {tx.description || categoryName}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-semibold text-on-surface truncate">
+                                {tx.description || categoryName}
+                              </span>
+                              {tx.photo_url && (
+                                <span className="material-symbols-outlined text-[13px] text-outline flex-shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>photo_camera</span>
+                              )}
+                            </div>
                             <span className="text-sm text-on-surface-variant truncate">
                               {subLabel}
                             </span>
@@ -322,6 +504,16 @@ export default function TransactionsPage() {
         onClose={() => setTxFormOpen(false)}
         wallets={wallets}
         onSave={handleSaveTransaction}
+      />
+
+      {/* ====== TRANSACTION DETAIL MODAL ====== */}
+      <TransactionDetail
+        isOpen={detailOpen}
+        onClose={() => { setDetailOpen(false); setSelectedTx(null) }}
+        transaction={selectedTx}
+        wallets={wallets}
+        onDelete={handleDeleteTx}
+        onUpdate={handleUpdateTx}
       />
     </div>
   )
