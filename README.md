@@ -11,6 +11,7 @@ DompetKu adalah aplikasi pencatatan keuangan pribadi modern berbasis web yang di
 - **Unggah Bukti Struk/Foto:** Lampirkan foto bukti transaksi lengkap dengan kompresi sisi klien (HTML5 Canvas) dan **Watermark** (ala Strava).
 - **Galeri Transaksi:** Lihat daftar transaksi Anda dalam mode list konvensional atau mode **Grid Galeri** yang menarik.
 - **Tabungan Target (Sinking Funds):** Buat target tabungan (misal: Beli PC, Liburan) dan alokasikan dana langsung dari saldo bebas Anda.
+- **Pelacak Tagihan Berulang (Recurring Bills):** Kelola tagihan bulanan (listrik, internet, dll) dengan sistem reset otomatis setiap bulan dan sekali klik untuk memotong saldo dompet.
 - **Autentikasi Aman:** Sistem pendaftaran dan login yang terintegrasi (mendukung fitur OTP / konfirmasi email).
 - **Akses Cepat (Progressive Web App):** Bisa diinstal di layar utama HP Anda sebagai aplikasi PWA.
 - **Dark Mode:** Dukungan tema gelap (Dark Mode) untuk kenyamanan mata.

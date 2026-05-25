@@ -155,7 +155,7 @@ export default function RecurringBills({
                   </div>
                   <div className="flex flex-col text-sm">
                     <span className="text-text-secondary font-medium">{formatCurrency(bill.amount)}</span>
-                    <span className="text-text-tertiary text-xs mt-0.5">Batas Tagihan : Tanggal {bill.due_day}</span>
+                    <span className="text-text-tertiary text-xs mt-0.5">Batas : Tanggal {bill.due_day}</span>
                   </div>
                 </div>
 
