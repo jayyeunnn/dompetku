@@ -7,7 +7,8 @@ import {
   Wallet, Banknote, Smartphone, CreditCard,
   PiggyBank, Target,
   ArrowDownLeft, ArrowUpRight, ArrowLeftRight,
-  Tag
+  Tag,
+  Coins, Vault, TrendingUp, Bitcoin, Gem
 } from 'lucide-react'
 
 // ============================================
@@ -128,6 +129,7 @@ export const ICON_MAP = {
   PiggyBank, Target,
   ArrowDownLeft, ArrowUpRight, ArrowLeftRight,
   Tag,
+  Coins, Vault, TrendingUp, Bitcoin, Gem,
 }
 
 /**
@@ -151,10 +153,17 @@ export const DEFAULT_WALLETS = [
 // ============================================
 export const WALLET_ICONS = [
   { name: 'Wallet', label: 'Dompet' },
-  { name: 'Banknote', label: 'Uang Tunai' },
+  { name: 'Banknote', label: 'Cash' },
   { name: 'CreditCard', label: 'Kartu' },
   { name: 'Smartphone', label: 'E-Wallet' },
   { name: 'PiggyBank', label: 'Tabungan' },
+  { name: 'Coins', label: 'Koin' },
+  { name: 'Vault', label: 'Brankas' },
+  { name: 'Briefcase', label: 'Bisnis' },
+  { name: 'TrendingUp', label: 'Investasi' },
+  { name: 'Bitcoin', label: 'Kripto' },
+  { name: 'Gem', label: 'Emas/Aset' },
+  { name: 'Gift', label: 'Voucher' },
 ]
 
 // ============================================

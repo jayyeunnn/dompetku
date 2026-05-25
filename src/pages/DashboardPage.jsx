@@ -15,7 +15,7 @@ import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import { formatCurrency } from '../lib/formatters'
-import { WALLET_COLORS, ALL_CATEGORIES, TX_TYPE_CONFIG } from '../lib/constants'
+import { WALLET_COLORS, WALLET_ICONS, ALL_CATEGORIES, TX_TYPE_CONFIG } from '../lib/constants'
 
 // Map wallet icon names to Material Symbols
 const WALLET_ICON_MAP = {
@@ -24,6 +24,13 @@ const WALLET_ICON_MAP = {
   CreditCard: 'credit_card',
   Smartphone: 'smartphone',
   PiggyBank: 'savings',
+  Coins: 'toll',
+  Vault: 'lock',
+  Briefcase: 'work',
+  TrendingUp: 'trending_up',
+  Bitcoin: 'currency_bitcoin',
+  Gem: 'diamond',
+  Gift: 'redeem',
 }
 
 // Map category icon names to Material Symbols
@@ -100,6 +107,7 @@ export default function DashboardPage() {
   // Add wallet form state
   const [walletFormOpen, setWalletFormOpen] = useState(false)
   const [newWalletName, setNewWalletName] = useState('')
+  const [newWalletIcon, setNewWalletIcon] = useState('Wallet')
   const [newWalletColor, setNewWalletColor] = useState(WALLET_COLORS[0])
   const [addingWallet, setAddingWallet] = useState(false)
 
@@ -279,11 +287,12 @@ export default function DashboardPage() {
     try {
       await addWallet({
         name: newWalletName.trim(),
-        icon: 'Wallet',
+        icon: newWalletIcon,
         color: newWalletColor,
         balance: 0,
       })
       setNewWalletName('')
+      setNewWalletIcon('Wallet')
       setNewWalletColor(WALLET_COLORS[0])
       setWalletFormOpen(false)
     } catch (err) {
@@ -623,6 +632,37 @@ export default function DashboardPage() {
             onChange={(e) => setNewWalletName(e.target.value)}
             placeholder="Contoh: BCA, GoPay, Cash"
           />
+
+          {/* Icon Picker */}
+          <div>
+            <label className="text-sm font-medium text-text-secondary mb-2 block">
+              Ikon Dompet
+            </label>
+            <div className="grid grid-cols-6 gap-2 bg-surface-container/50 p-2.5 rounded-xl border border-outline-variant/30">
+              {WALLET_ICONS.map((ico) => {
+                const symbol = WALLET_ICON_MAP[ico.name] || 'account_balance_wallet'
+                const isSelected = newWalletIcon === ico.name
+                return (
+                  <button
+                    key={ico.name}
+                    type="button"
+                    onClick={() => setNewWalletIcon(ico.name)}
+                    title={ico.label}
+                    className={`h-9 rounded-lg flex items-center justify-center transition-all duration-150 ${
+                      isSelected
+                        ? 'bg-primary text-on-primary shadow-sm font-bold scale-105'
+                        : 'bg-surface hover:bg-surface-container-high text-on-surface-variant'
+                    }`}
+                    aria-label={`Pilih ikon ${ico.label}`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      {symbol}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
           {/* Color Picker */}
           <div>

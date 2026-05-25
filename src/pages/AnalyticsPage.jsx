@@ -5,6 +5,9 @@ import { formatCurrency } from '../lib/formatters'
 import { ALL_CATEGORIES, MONTH_NAMES } from '../lib/constants'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth } from '../context/AuthContext'
+import Modal from '../components/ui/Modal'
+import Button from '../components/ui/Button'
+import Input from '../components/ui/Input'
 
 // Color map for categories in donut chart
 const CATEGORY_COLORS = {
@@ -100,6 +103,64 @@ export default function AnalyticsPage() {
     }
     setIsEditingBudget(false)
   }, [budgetKey])
+
+  // Category Budget Limit States
+  const [categoryBudgets, setCategoryBudgets] = useState({})
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false)
+  const [tempCategoryBudgets, setTempCategoryBudgets] = useState({})
+
+  // Load category budgets from localStorage when user, year, or month changes
+  useEffect(() => {
+    if (!user) return
+    const budgets = {}
+    ALL_CATEGORIES.forEach(cat => {
+      if (cat.type === 'expense') {
+        const key = `catbudget_${user.id}_${cat.id}_${year}_${month}`
+        const val = localStorage.getItem(key)
+        if (val) {
+          budgets[cat.id] = Number(val)
+        }
+      }
+    })
+    setCategoryBudgets(budgets)
+  }, [user, year, month])
+
+  const handleOpenBudgetModal = () => {
+    const temp = {}
+    ALL_CATEGORIES.forEach(cat => {
+      if (cat.type === 'expense') {
+        temp[cat.id] = categoryBudgets[cat.id] || ''
+      }
+    })
+    setTempCategoryBudgets(temp)
+    setIsBudgetModalOpen(true)
+  }
+
+  const handleSaveCategoryBudgets = () => {
+    if (!user) return
+    const newBudgets = { ...categoryBudgets }
+    Object.entries(tempCategoryBudgets).forEach(([catId, val]) => {
+      const numVal = Number(val)
+      const key = `catbudget_${user.id}_${catId}_${year}_${month}`
+      if (isNaN(numVal) || numVal <= 0) {
+        delete newBudgets[catId]
+        localStorage.removeItem(key)
+      } else {
+        newBudgets[catId] = numVal
+        localStorage.setItem(key, numVal.toString())
+      }
+    })
+    setCategoryBudgets(newBudgets)
+    setIsBudgetModalOpen(false)
+  }
+
+  const handleCategoryBudgetChange = (catId, valString) => {
+    const cleaned = valString.replace(/[^\d]/g, '')
+    setTempCategoryBudgets(prev => ({
+      ...prev,
+      [catId]: cleaned ? Number(cleaned) : ''
+    }))
+  }
 
   // Chart states
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(null)
@@ -431,6 +492,96 @@ export default function AnalyticsPage() {
               </div>
             </section>
 
+            {/* ====== CATEGORY BUDGETS CARD ====== */}
+            <section className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-semibold text-on-surface">Anggaran Kategori</h3>
+                <button
+                  onClick={handleOpenBudgetModal}
+                  className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-0.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">tune</span>
+                  Atur Anggaran
+                </button>
+              </div>
+
+              {Object.keys(categoryBudgets).length === 0 ? (
+                <div className="text-center py-6 px-4 bg-surface-container-low/30 rounded-2xl border border-dashed border-outline-variant/60 flex flex-col items-center gap-2">
+                  <span className="material-symbols-outlined text-outline text-[24px]">payments</span>
+                  <p className="text-[11px] text-on-surface-variant max-w-[280px]">
+                    Belum ada anggaran kategori diatur untuk bulan ini.
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleOpenBudgetModal}
+                    className="mt-1 text-[11px] py-1.5 px-3 h-auto"
+                  >
+                    Mulai Buat Anggaran
+                  </Button>
+                </div>
+              ) : (
+                <div className="border border-surface-container rounded-xl overflow-hidden bg-surface-container-lowest divide-y divide-surface-container">
+                  {ALL_CATEGORIES.filter(c => c.type === 'expense' && categoryBudgets[c.id] > 0).map(cat => {
+                    const limit = categoryBudgets[cat.id]
+                    const spent = categoryMap[cat.id] || 0
+                    const pct = Math.min(100, Math.round((spent / limit) * 100))
+                    const remaining = limit - spent
+                    const isOver = spent > limit
+
+                    return (
+                      <div key={cat.id} className="flex flex-col gap-2.5 p-4 hover:bg-surface-container-low/40 transition-colors">
+                        {/* Upper row: icon, name, spent vs limit, and status */}
+                        <div className="flex items-center gap-4">
+                          {/* Icon circle */}
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: `${CATEGORY_COLORS[cat.id] || '#737686'}15`, color: CATEGORY_COLORS[cat.id] || '#737686' }}
+                          >
+                            <span className="material-symbols-outlined text-[20px]">
+                              {getCategoryIcon(cat.id)}
+                            </span>
+                          </div>
+
+                          {/* Middle: Category name & details */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[14px] text-on-surface truncate font-semibold">
+                              {cat.name}
+                            </p>
+                            <p className="text-[11px] text-on-surface-variant truncate tabular-nums mt-0.5">
+                              Terpakai {formatCurrency(spent)} dari {formatCurrency(limit)}
+                            </p>
+                          </div>
+
+                          {/* Right: Remaining status and percentage */}
+                          <div className="text-right shrink-0">
+                            <p className={`text-[13px] font-bold tabular-nums ${
+                              isOver ? 'text-error' : pct >= 80 ? 'text-amber-600' : 'text-secondary'
+                            }`}>
+                              {isOver ? `Lebih ${formatCurrency(spent - limit)}` : `Sisa ${formatCurrency(remaining)}`}
+                            </p>
+                            <p className="text-[10px] text-on-surface-variant font-medium mt-0.5">
+                              {pct}% Terpakai
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Lower row: Progress bar */}
+                        <div className="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              pct >= 100 ? 'bg-error' : pct >= 80 ? 'bg-amber-500' : 'bg-primary'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+
             {/* ====== CATEGORY DONUT CHART CARD ====== */}
             <section className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container flex flex-col gap-4">
               <div>
@@ -688,6 +839,64 @@ export default function AnalyticsPage() {
           </div>
         )}
       </main>
+
+      {/* ====== ATUR ANGGARAN KATEGORI MODAL ====== */}
+      <Modal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        title="Atur Anggaran Kategori"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-[11px] text-on-surface-variant leading-relaxed">
+            Masukkan nominal batas pengeluaran bulanan untuk kategori di bawah ini. Kosongkan atau isi 0 untuk menonaktifkan anggaran kategori tersebut.
+          </p>
+
+          <div className="max-h-[280px] overflow-y-auto pr-1 flex flex-col gap-3 scrollbar-hide">
+            {ALL_CATEGORIES.filter(c => c.type === 'expense').map(cat => (
+              <div key={cat.id} className="flex items-center justify-between gap-3 p-1">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${CATEGORY_COLORS[cat.id] || '#737686'}15`, color: CATEGORY_COLORS[cat.id] || '#737686' }}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {getCategoryIcon(cat.id)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-on-surface truncate">{cat.name}</span>
+                </div>
+                <div className="w-32 shrink-0">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={tempCategoryBudgets[cat.id] !== undefined && tempCategoryBudgets[cat.id] !== '' ? formatCurrency(Number(tempCategoryBudgets[cat.id]), false) : ''}
+                    onChange={(e) => handleCategoryBudgetChange(cat.id, e.target.value)}
+                    className="w-full text-right px-2.5 py-1.5 bg-surface-container rounded-lg border border-outline-variant focus:border-primary text-xs font-bold focus:outline-none"
+                    placeholder="Tidak ada"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2.5 mt-2 pt-3 border-t border-surface-container">
+            <Button
+              variant="secondary"
+              onClick={() => setIsBudgetModalOpen(false)}
+              className="flex-1 text-[12px] py-2 px-3 h-auto"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveCategoryBudgets}
+              className="flex-1 text-[12px] py-2 px-3 h-auto"
+            >
+              Simpan Anggaran
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
