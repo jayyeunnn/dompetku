@@ -5,8 +5,10 @@ import { useTheme } from '../context/ThemeContext'
 import { useWallets } from '../hooks/useWallets'
 import { useTransactions } from '../hooks/useTransactions'
 import { useSinkingFunds } from '../hooks/useSinkingFunds'
+import { useRecurringBills } from '../hooks/useRecurringBills'
 import TransactionForm from '../components/transactions/TransactionForm'
 import TransactionDetail from '../components/transactions/TransactionDetail'
+import RecurringBills from '../components/bills/RecurringBills'
 import { deleteTransactionPhoto } from '../lib/imageUtils'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
@@ -86,6 +88,7 @@ export default function DashboardPage() {
   const { wallets, totalBalance, loading: walletsLoading, addWallet, updateWalletBalance, refetch: refetchWallets } = useWallets()
   const { transactions, loading: txLoading, addTransaction, deleteTransaction, updateTransaction, getRecent, refetch: refetchTx } = useTransactions()
   const { totalAllocated } = useSinkingFunds()
+  const { bills, loading: billsLoading, addBill, deleteBill, markAsPaid, refetch: refetchBills } = useRecurringBills()
 
   // Transaction form state
   const [txFormOpen, setTxFormOpen] = useState(false)
@@ -132,6 +135,34 @@ export default function DashboardPage() {
     // Refresh data from database
     await refetchWallets()
     await refetchTx()
+  }
+
+  const handlePayBill = async (bill, walletId) => {
+    const numAmount = Number(bill.amount) || 0
+    
+    // 1. Mark as paid
+    const now = new Date()
+    const periodStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    await markAsPaid(bill.id, periodStr)
+
+    // 2. Reduce wallet balance
+    await updateWalletBalance(walletId, numAmount, 'subtract')
+
+    // 3. Add transaction
+    await addTransaction({
+      type: 'expense',
+      amount: numAmount,
+      wallet_id: walletId,
+      category_id: 'expense-subscription',
+      description: `Tagihan: ${bill.name}`,
+      date: now.toISOString().split('T')[0],
+      photo_url: null
+    })
+
+    // 4. Refresh data
+    await refetchWallets()
+    await refetchTx()
+    await refetchBills()
   }
 
   /**
@@ -418,6 +449,16 @@ export default function DashboardPage() {
             <span className="text-xs font-medium text-on-surface-variant">Transfer</span>
           </button>
         </section>
+
+        {/* ====== RECURRING BILLS ====== */}
+        <RecurringBills
+          bills={bills}
+          wallets={wallets}
+          loading={billsLoading}
+          onAddBill={addBill}
+          onDeleteBill={deleteBill}
+          onPayBill={handlePayBill}
+        />
 
         {/* ====== RECENT TRANSACTIONS ====== */}
         <section>
