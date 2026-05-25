@@ -1,16 +1,53 @@
-# React + Vite
+# DompetKu - Personal Finance Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DompetKu adalah aplikasi pencatatan keuangan pribadi modern berbasis web yang didesain untuk membantu Anda melacak pemasukan, pengeluaran, dan tabungan target dengan mudah. Aplikasi ini dibuat dengan antarmuka yang responsif, minimalis, dan mengusung gaya desain Material Design 3 (MD3).
 
-Currently, two official plugins are available:
+## 🚀 Fitur Utama
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Dashboard Keuangan:** Ringkasan total saldo, pemasukan, dan pengeluaran bulan ini.
+- **Manajemen Multi-Dompet (Wallets):** Pisahkan uang Anda ke berbagai dompet seperti Cash, Rekening BCA, e-Wallet, dll.
+- **Pencatatan Transaksi:** Catat pemasukan, pengeluaran, dan transfer antar dompet dengan mudah.
+- **Tabungan Target (Sinking Funds):** Buat target tabungan (misal: Beli PC, Liburan) dan alokasikan dana langsung dari saldo bebas Anda.
+- **Autentikasi Aman:** Sistem pendaftaran dan login yang terintegrasi (mendukung fitur OTP / konfirmasi email).
+- **Akses Cepat (Progressive Web App):** Bisa diinstal di layar utama HP Anda sebagai aplikasi PWA.
 
-## React Compiler
+## 💻 Teknologi yang Digunakan
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React.js (menggunakan Vite)
+- **Styling:** Tailwind CSS (dengan custom utility bergaya Material Design 3)
+- **Backend & Database:** Supabase (PostgreSQL, Authentication)
+- **Ikon:** Google Material Symbols & Lucide React
+- **Deployment:** Vercel
 
-## Expanding the ESLint configuration
+## ⚙️ Cara Menjalankan Secara Lokal
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Ikuti langkah-langkah di bawah ini untuk menjalankan aplikasi DompetKu di komputer Anda:
+
+### 1. Kloning Repositori
+```bash
+git clone https://github.com/username/dompetku.git
+cd dompetku
+```
+
+### 2. Install Dependensi
+Pastikan Anda sudah menginstal Node.js, lalu jalankan:
+```bash
+npm install
+```
+
+### 3. Konfigurasi Environment Variables
+Buat file bernama `.env.local` di direktori utama proyek, lalu masukkan URL dan Anon Key dari Supabase Anda:
+```env
+VITE_SUPABASE_URL=https://[PROJECT_ID].supabase.co
+VITE_SUPABASE_ANON_KEY=[YOUR_SUPABASE_ANON_KEY]
+```
+*(Catatan: Anda perlu membuat proyek di [Supabase](https://supabase.com/) dan menyiapkan tabel database yang dibutuhkan).*
+
+### 4. Jalankan Development Server
+```bash
+npm run dev
+```
+Buka browser Anda dan kunjungi `http://localhost:5173/` untuk melihat aplikasi.
+
+---
+**Dibuat oleh Gian Akhiru Ramadhan © 2026**
