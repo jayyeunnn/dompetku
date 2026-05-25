@@ -140,6 +140,13 @@ export default function DashboardPage() {
   const handlePayBill = async (bill, walletId) => {
     const numAmount = Number(bill.amount) || 0
     
+    // 0. Check wallet balance
+    const wallet = wallets.find(w => w.id === walletId)
+    if (!wallet) throw new Error('Dompet tidak ditemukan')
+    if (Number(wallet.balance) < numAmount) {
+      throw new Error('Saldo dompet tidak cukup')
+    }
+
     // 1. Mark as paid
     const now = new Date()
     const periodStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`

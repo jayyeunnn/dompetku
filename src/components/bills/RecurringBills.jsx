@@ -139,22 +139,21 @@ export default function RecurringBills({
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-bold text-text-primary">{bill.name}</h3>
-                    {/* Delete button */}
-                    <button
-                      onClick={() => handleDelete(bill.id, bill.name)}
-                      className="text-text-tertiary hover:text-expense-dark transition-colors active:scale-95"
-                      aria-label="Hapus tagihan"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-text-secondary font-medium">Rp{formatCurrency(bill.amount)}</span>
+                    <span className="text-text-secondary font-medium">{formatCurrency(bill.amount)}</span>
                     <span className="text-text-tertiary text-xs">Tgl {bill.due_day}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-end mt-2 sm:mt-0 min-w-[120px]">
+                <div className="flex justify-end mt-2 sm:mt-0 min-w-[120px] items-center gap-2">
+                  <button
+                    onClick={() => handleDelete(bill.id, bill.name)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:bg-expense-light hover:text-expense-dark transition-colors active:scale-95 flex-shrink-0"
+                    aria-label="Hapus tagihan"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
                   {isPaid ? (
                     <div className="w-full sm:w-auto py-1.5 px-3 rounded-xl bg-income-light text-income-dark text-xs font-bold text-center flex items-center justify-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">check_circle</span>
@@ -233,7 +232,7 @@ export default function RecurringBills({
               <p className="text-sm text-text-secondary mb-1">Membayar tagihan</p>
               <h3 className="font-bold text-lg text-text-primary mb-2">{selectedBill.name}</h3>
               <p className="text-2xl font-bold text-expense-dark">
-                Rp{formatCurrency(selectedBill.amount)}
+                {formatCurrency(selectedBill.amount)}
               </p>
             </div>
 

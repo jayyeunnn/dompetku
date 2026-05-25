@@ -245,6 +245,9 @@ export default function TransactionDetail({
 
   const currentPhotoDisplay = newPhotoPreview || (removeExistingPhoto ? null : editPhotoUrl)
 
+  // Determine if this transaction is an auto-generated recurring bill
+  const isSubscriptionBill = tx.category_id === 'expense-subscription' && tx.description?.startsWith('Tagihan: ')
+
   return (
     <Modal
       isOpen={isOpen}
@@ -339,10 +342,12 @@ export default function TransactionDetail({
         <div className="flex flex-col gap-5">
           {/* Action buttons */}
           <div className="flex justify-end gap-2 -mt-1 -mb-2">
-            <button onClick={enterEditMode}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors active:scale-95 text-on-surface-variant" aria-label="Edit transaksi">
-              <span className="material-symbols-outlined text-[18px]">edit</span>
-            </button>
+            {!isSubscriptionBill && (
+              <button onClick={enterEditMode}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors active:scale-95 text-on-surface-variant" aria-label="Edit transaksi">
+                <span className="material-symbols-outlined text-[18px]">edit</span>
+              </button>
+            )}
             <button onClick={() => setConfirmDelete(true)}
               className="w-9 h-9 flex items-center justify-center rounded-full bg-expense-light hover:bg-red-200 transition-colors active:scale-95 text-expense-dark" aria-label="Hapus transaksi">
               <span className="material-symbols-outlined text-[18px]">delete</span>
