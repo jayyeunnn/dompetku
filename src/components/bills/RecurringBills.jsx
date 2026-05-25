@@ -140,9 +140,9 @@ export default function RecurringBills({
                   <div className="flex justify-between items-start mb-1">
                     <h3 className="font-bold text-text-primary">{bill.name}</h3>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex flex-col text-sm">
                     <span className="text-text-secondary font-medium">{formatCurrency(bill.amount)}</span>
-                    <span className="text-text-tertiary text-xs">Tgl {bill.due_day}</span>
+                    <span className="text-text-tertiary text-xs mt-0.5">Batas Tagihan : Tanggal {bill.due_day}</span>
                   </div>
                 </div>
 
