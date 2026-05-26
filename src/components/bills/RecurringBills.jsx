@@ -148,28 +148,35 @@ export default function RecurringBills({
             return (
               <div
                 key={bill.id}
-                className="bg-background-primary rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-border/50"
+                className="bg-background-primary rounded-2xl p-4 flex flex-col gap-3 border border-border/50"
               >
-                <div className="flex-1">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-bold text-text-primary">{bill.name}</h3>
+                {/* Row 1: Title, Due Date Badge, and Delete Button */}
+                <div className="flex justify-between items-center w-full">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h3 className="font-bold text-text-primary truncate">{bill.name}</h3>
+                    <span className="text-text-tertiary text-[10px] font-semibold bg-surface-container/60 px-2 py-0.5 rounded-lg shrink-0">
+                      Tgl {bill.due_day}
+                    </span>
                   </div>
-                  <div className="flex flex-col text-sm">
-                    <span className="text-text-secondary font-medium">{formatCurrency(bill.amount)}</span>
-                    <span className="text-text-tertiary text-xs mt-0.5">Batas : Tanggal {bill.due_day}</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end mt-2 sm:mt-0 min-w-[120px] items-center gap-2">
+                  {/* Delete button (styled matching transaction delete) */}
                   <button
                     onClick={() => handleDelete(bill.id)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-text-tertiary hover:bg-expense-light hover:text-expense-dark transition-colors active:scale-95 flex-shrink-0"
+                    className="w-9 h-9 flex items-center justify-center rounded-full bg-expense-light text-expense-dark hover:bg-red-200 transition-colors active:scale-95 shrink-0"
                     aria-label="Hapus tagihan"
                   >
                     <span className="material-symbols-outlined text-[18px]">delete</span>
                   </button>
+                </div>
+
+                {/* Row 2: Nominal */}
+                <div className="text-base font-extrabold text-text-secondary tabular-nums">
+                  {formatCurrency(bill.amount)}
+                </div>
+
+                {/* Row 3: Action Button (Full Width at Bottom) */}
+                <div className="w-full">
                   {isPaid ? (
-                    <div className="w-full sm:w-auto py-1.5 px-3 rounded-xl bg-income-light text-income-dark text-xs font-bold text-center flex items-center justify-center gap-1">
+                    <div className="w-full py-2 px-3 rounded-xl bg-income-light text-income-dark text-xs font-bold text-center flex items-center justify-center gap-1">
                       <span className="material-symbols-outlined text-[14px]">check_circle</span>
                       Lunas
                     </div>
@@ -177,7 +184,7 @@ export default function RecurringBills({
                     <Button
                       variant="primary"
                       size="sm"
-                      className="w-full sm:w-auto"
+                      className="w-full py-2 text-xs"
                       onClick={() => handleOpenPay(bill)}
                     >
                       Bayar Sekarang
