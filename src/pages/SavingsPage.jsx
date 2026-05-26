@@ -48,6 +48,11 @@ export default function SavingsPage() {
   const [newFundDeadline, setNewFundDeadline] = useState('')
   const [addingFund, setAddingFund] = useState(false)
 
+  // Delete confirmation
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   const handleAllocate = (fund) => {
     setSelectedFund(fund)
     setAllocateOpen(true)
@@ -88,9 +93,23 @@ export default function SavingsPage() {
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Hapus tabungan target ini?')) {
-      await deleteFund(id)
+  const handleDeleteClick = (id) => {
+    setConfirmDeleteId(id)
+    setDeleteError('')
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return
+    setIsDeleting(true)
+    setDeleteError('')
+    try {
+      await deleteFund(confirmDeleteId)
+      setConfirmDeleteId(null)
+    } catch (err) {
+      console.error(err)
+      setDeleteError(err.message || 'Gagal menghapus target tabungan')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -227,8 +246,8 @@ export default function SavingsPage() {
                       </div>
                       {/* Delete button */}
                       <button
-                        onClick={() => handleDelete(fund.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-full text-outline hover:text-error hover:bg-error-container transition-colors"
+                        onClick={() => handleDeleteClick(fund.id)}
+                        className="w-9 h-9 flex items-center justify-center rounded-full bg-expense-light text-expense-dark hover:bg-red-200 transition-colors active:scale-95 shrink-0"
                         aria-label="Hapus target"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -306,8 +325,8 @@ export default function SavingsPage() {
                             Tercapai ✓
                           </span>
                           <button
-                            onClick={() => handleDelete(fund.id)}
-                            className="w-8 h-8 flex items-center justify-center rounded-full text-outline hover:text-error hover:bg-error-container transition-colors flex-shrink-0"
+                            onClick={() => handleDeleteClick(fund.id)}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-expense-light text-expense-dark hover:bg-red-200 transition-colors active:scale-95 shrink-0"
                             aria-label="Hapus target"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -411,6 +430,49 @@ export default function SavingsPage() {
       >
         <span className="material-symbols-outlined text-[24px]">add</span>
       </button>
+
+      {/* ====== DELETE CONFIRMATION MODAL ====== */}
+      <Modal
+        isOpen={confirmDeleteId !== null}
+        onClose={() => { setConfirmDeleteId(null); setDeleteError('') }}
+        title="Hapus Target"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="text-center p-4">
+            <div className="w-16 h-16 bg-expense-light text-expense-dark rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="material-symbols-outlined text-[32px]">delete_forever</span>
+            </div>
+            <h3 className="font-bold text-lg text-text-primary mb-1">Yakin Hapus Target?</h3>
+            <p className="text-sm text-text-secondary text-center">
+              Target <span className="font-semibold text-text-primary">"{funds.find(f => f.id === confirmDeleteId)?.name}"</span> akan dihapus permanen beserta seluruh histori alokasinya.
+            </p>
+          </div>
+
+          {deleteError && (
+            <p className="text-sm text-expense-dark bg-expense-light p-3 rounded-xl text-center">
+              {deleteError}
+            </p>
+          )}
+
+          <div className="flex gap-3 mt-2">
+            <Button
+              variant="ghost"
+              className="flex-1"
+              onClick={() => { setConfirmDeleteId(null); setDeleteError('') }}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              className="flex-1"
+              loading={isDeleting}
+              onClick={handleConfirmDelete}
+            >
+              {isDeleting ? 'Menghapus...' : 'Hapus Target'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
