@@ -305,6 +305,7 @@ export default function DashboardPage() {
   const freeBalance = Number(totalBalance) || 0
   const recentTx = getRecent(5)
   const displayName = user?.user_metadata?.full_name || 'Pengguna'
+  const avatarUrl = user?.user_metadata?.avatar_url || ''
 
   return (
     <div className="bg-background text-on-background font-sans min-h-screen">
@@ -313,8 +314,18 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center w-full px-5 h-16 max-w-[448px] mx-auto">
           <div className="flex items-center gap-2">
             {/* User avatar circle */}
-            <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-sm">
-              {displayName.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-sm">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             <div>
               <h1 className="text-xs font-medium tracking-wide text-on-surface-variant">
