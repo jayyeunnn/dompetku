@@ -5,6 +5,7 @@ const navItems = [
   { to: '/transactions', icon: 'receipt_long' },
   { to: '/analytics', icon: 'bar_chart' },
   { to: '/savings', icon: 'savings' },
+  { to: '/profile', icon: 'person' },
 ]
 
 export default function BottomNav() {
@@ -18,7 +19,7 @@ export default function BottomNav() {
         >
           {({ isActive }) => (
             <div
-              className={`px-5 py-1.5 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`px-3.5 py-1.5 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isActive
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-500 hover:bg-gray-100/50'
