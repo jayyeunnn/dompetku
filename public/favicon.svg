@@ -1,21 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0EA5E9"/>
-      <stop offset="100%" style="stop-color:#0284C7"/>
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="108" fill="url(#bg)"/>
-  <g transform="translate(256,256)">
-    <!-- Wallet body -->
-    <rect x="-120" y="-80" width="240" height="160" rx="24" fill="white" opacity="0.95"/>
-    <!-- Wallet flap -->
-    <path d="M-120,-80 L-120,-40 Q-120,-80 -80,-80 Z" fill="white" opacity="0.7"/>
-    <!-- Card slot line -->
-    <rect x="60" y="-20" width="60" height="40" rx="12" fill="#0EA5E9" opacity="0.3"/>
-    <!-- Coin circle -->
-    <circle cx="90" cy="0" r="14" fill="#0EA5E9" opacity="0.6"/>
-    <!-- Dollar sign -->
-    <text x="0" y="20" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="80" font-weight="800" fill="#0EA5E9" opacity="0.9">₹</text>
-  </g>
+  <rect width="512" height="512" rx="118" fill="url(#bg)"/>
+  
+  <!-- Card 1 (Tilted behind) -->
+  <rect x="135" y="135" width="130" height="90" rx="12" fill="#ffffff" fill-opacity="0.7" transform="rotate(-8 200 180)"/>
+  
+  <!-- Card 2 (Straight behind) -->
+  <rect x="205" y="145" width="130" height="90" rx="12" fill="#ffffff"/>
+  
+  <!-- Main Wallet Body -->
+  <rect x="136" y="210" width="240" height="160" rx="22" fill="#ffffff"/>
+  
+  <!-- Flap with background-gradient stroke for negative space cutout -->
+  <rect x="266" y="260" width="110" height="60" rx="14" fill="#ffffff" stroke="url(#bg)" stroke-width="12"/>
+  
+  <!-- Flap Button/Snap with background-gradient fill -->
+  <circle cx="335" cy="290" r="8" fill="url(#bg)"/>
 </svg>
