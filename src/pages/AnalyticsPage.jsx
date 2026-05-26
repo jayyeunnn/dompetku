@@ -77,7 +77,7 @@ const drawRoundedBarPath = (x, y, w, h, r) => {
 }
 
 export default function AnalyticsPage() {
-  const { signOut, user } = useAuth()
+  const { user } = useAuth()
   const { toggleTheme, isDark } = useTheme()
   const { totalBalance } = useWallets()
   
@@ -310,27 +310,18 @@ export default function AnalyticsPage() {
   return (
     <div className="bg-background text-on-background font-sans min-h-screen">
       {/* ====== TOP APP BAR ====== */}
-      <header className="sticky top-0 z-50 bg-background flex items-center justify-between px-5 h-16 max-w-[448px] mx-auto">
+      <header className="sticky top-0 z-50 bg-background flex items-center justify-between px-5 h-16 max-w-[448px] mx-auto border-b border-surface-container/30">
         <div className="w-10" />
         <h1 className="text-xl font-bold tracking-tight text-primary">Analisis Keuangan</h1>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleTheme}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
-            aria-label="Ubah Tema"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDark ? 'light_mode' : 'dark_mode'}
-            </span>
-          </button>
-          <button
-            onClick={signOut}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
-            aria-label="Keluar"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-          </button>
-        </div>
+        <button
+          onClick={toggleTheme}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
+          aria-label="Ubah Tema"
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
       </header>
 
       {/* ====== MAIN CONTENT ====== */}

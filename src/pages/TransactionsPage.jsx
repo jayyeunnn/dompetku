@@ -6,6 +6,7 @@ import TransactionDetail from '../components/transactions/TransactionDetail'
 import { deleteTransactionPhoto } from '../lib/imageUtils'
 import { formatCurrency, formatDate } from '../lib/formatters'
 import { ALL_CATEGORIES, TX_TYPE_CONFIG, MONTH_NAMES } from '../lib/constants'
+import { useTheme } from '../context/ThemeContext'
 
 // Map Lucide icon names to Material Symbols
 const CATEGORY_ICON_MAP = {
@@ -54,6 +55,7 @@ function getMaterialIcon(lucideIconName) {
 }
 
 export default function TransactionsPage() {
+  const { toggleTheme, isDark } = useTheme()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -238,15 +240,17 @@ export default function TransactionsPage() {
   return (
     <div className="bg-background text-on-background font-sans min-h-screen">
       {/* ====== TOP APP BAR ====== */}
-      <header className="sticky top-0 z-50 bg-background flex items-center justify-between px-5 h-16 max-w-[448px] mx-auto">
+      <header className="sticky top-0 z-50 bg-background flex items-center justify-between px-5 h-16 max-w-[448px] mx-auto border-b border-surface-container/30">
         <div className="w-10" /> {/* Spacer for centering */}
         <h1 className="text-xl font-bold tracking-tight text-primary">Riwayat Transaksi</h1>
         <button
-          onClick={() => setTxFormOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors active:scale-95 duration-100"
-          aria-label="Tambah transaksi"
+          onClick={toggleTheme}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
+          aria-label="Ubah Tema"
         >
-          <span className="material-symbols-outlined text-on-surface">add</span>
+          <span className="material-symbols-outlined text-[20px]">
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
         </button>
       </header>
 

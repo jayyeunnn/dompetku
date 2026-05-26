@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useWallets } from '../hooks/useWallets'
 import { useSinkingFunds } from '../hooks/useSinkingFunds'
+import { useTheme } from '../context/ThemeContext'
 import AllocateForm from '../components/savings/AllocateForm'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
@@ -22,6 +23,7 @@ function getFundMaterialIcon(iconName) {
 }
 
 export default function SavingsPage() {
+  const { toggleTheme, isDark } = useTheme()
   const { wallets, totalBalance, updateWalletBalance, refetch: refetchWallets } = useWallets()
   const {
     funds,
@@ -109,17 +111,19 @@ export default function SavingsPage() {
   return (
     <div className="bg-background text-on-background font-sans min-h-screen pb-24">
       {/* ====== TOP APP BAR ====== */}
-      <header className="sticky top-0 z-40 w-full max-w-[448px] mx-auto bg-background flex justify-between items-center h-16 px-5">
+      <header className="sticky top-0 z-40 w-full max-w-[448px] mx-auto bg-background flex justify-between items-center h-16 px-5 border-b border-surface-container/30">
         <div className="w-10" /> {/* Spacer */}
         <h1 className="text-xl font-bold tracking-tight text-primary">
           Tabungan Target
         </h1>
         <button
-          onClick={() => setNewFundOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low transition-colors active:scale-95"
-          aria-label="Tambah target"
+          onClick={toggleTheme}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity active:scale-95 text-on-surface"
+          aria-label="Ubah Tema"
         >
-          <span className="material-symbols-outlined">add</span>
+          <span className="material-symbols-outlined text-[20px]">
+            {isDark ? 'light_mode' : 'dark_mode'}
+          </span>
         </button>
       </header>
 
@@ -391,6 +395,22 @@ export default function SavingsPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* ====== FAB - Add Sinking Fund ====== */}
+      <button
+        onClick={() => setNewFundOpen(true)}
+        className="
+          fixed bottom-24 right-5 z-30
+          w-14 h-14 rounded-2xl
+          bg-primary text-on-primary shadow-lg
+          flex items-center justify-center
+          hover:opacity-90 active:scale-90
+          transition-all duration-200
+        "
+        aria-label="Tambah target"
+      >
+        <span className="material-symbols-outlined text-[24px]">add</span>
+      </button>
     </div>
   )
 }
